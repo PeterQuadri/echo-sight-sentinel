@@ -174,9 +174,6 @@ def load_system():
         socketio_server=sio
     )
     
-    # Create a background thread specifically for the detector processing
-    # We don't call detector.start() because that blocks or handles audio differently
-    # We call our new start_headless()
     detector.start_headless()
 
 if __name__ == '__main__':

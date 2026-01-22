@@ -10,5 +10,4 @@ flask-socketio
 eventlet
 flask-cors
 gunicorn
-pyaudio
 websocket-client

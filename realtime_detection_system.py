@@ -7,7 +7,6 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import librosa
-import pyaudio
 import queue
 import threading
 from datetime import datetime
@@ -354,15 +353,6 @@ class RealTimeDetector:
         # - Save audio clip
         # - Trigger other actions
     
-    def audio_callback(self, in_data, frame_count, time_info, status):
-        """Callback for audio stream"""
-        if status:
-            print(f"⚠️  Audio status: {status}")
-        
-        audio_data = np.frombuffer(in_data, dtype=np.float32)
-        self.audio_queue.put(audio_data)
-        
-        return (in_data, pyaudio.paContinue)
     
     def process_audio_stream(self):
         """
@@ -463,55 +453,8 @@ class RealTimeDetector:
         
         print("✅ Detection system running in background (waiting for socket input)...")
 
-    def start(self):
-        """Start real-time detection with local microphone"""
-        print("="*70)
-        print("🚀 STARTING EMERGENCY SOUND DETECTION SYSTEM")
-        print("="*70)
-        print(f"\n⚙️  Configuration:")
-        print(f"   Sample Rate: {self.sr} Hz")
-        print(f"   Duration: {self.duration} seconds")
-        print(f"   Classes: {', '.join(self.class_names)}")
-        print(f"   Device: {self.device}")
-        
-        self.is_running = True
-        self.stats['start_time'] = time.time()
-        
-        # Start processing thread
-        processing_thread = threading.Thread(target=self.process_audio_stream)
-        processing_thread.daemon = True
-        processing_thread.start()
-        
-        # Initialize PyAudio
-        p = pyaudio.PyAudio()
-        
-        # Open audio stream
-        stream = p.open(
-            format=pyaudio.paFloat32,
-            channels=1,
-            rate=self.sr,
-            input=True,
-            frames_per_buffer=self.chunk_size,
-            stream_callback=self.audio_callback
-        )
-        
-        stream.start_stream()
-        
-        try:
-            while stream.is_active():
-                # Keep main thread alive
-                time.sleep(0.1)
-        except KeyboardInterrupt:
-            print("\n\n🛑 Stopping detection system...")
-        finally:
-            stream.stop_stream()
-            stream.close()
-            p.terminate()
-            self.is_running = False
-            
-            # Print statistics
-            self.print_statistics()
-    
+        print("✅ Detection system running in background (waiting for socket input)...")
+
     def print_statistics(self):
         """Print detection statistics"""
         if self.stats['start_time'] is None:

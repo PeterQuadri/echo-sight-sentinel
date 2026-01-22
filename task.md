@@ -21,4 +21,12 @@
 - [x] Prepare for Render Deployment
     - [x] Create `Procfile` and `runtime.txt` (runtime.txt implied default)
     - [x] Verify `requirements.txt` for production
-    - [ ] Create `render.yaml` (optional but good)
+    - [x] Create `render.yaml` (optional but good)
+- [x] Troubleshooting
+    - [x] Fix Git push error
+    - [x] Resolve WebSocket "flapping" disconnects (Add eventlet monkey-patch)
+- [/] Transition to Strict Web Flow
+    - [x] Remove `pyaudio` from `requirements.txt`
+    - [x] Remove local capture logic from `realtime_detection_system.py`
+    - [ ] Overhaul `index.html` for Sentinel/Command modes
+    - [ ] Deploy and verify Link-based flow
