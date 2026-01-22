@@ -1,0 +1,24 @@
+# Task Checklist
+
+- [x] Research existing implementation
+- [x] Implement WebSocket support
+    - [x] Modify `realtime_detection_system.py` for headless mode
+    - [x] Create `websocket_server.py`
+    - [x] Create `test_websocket_client.py`
+- [x] Verify local simulation (fixed bugs with missing imports and manual triggers)
+- [x] Create Deployment Guide
+- [x] Troubleshoot Network Deployment
+    - [x] Identify correct IP address (Python is picking virtual adapter)
+    - [x] Solve "Connection Timeout" (likely Windows Firewall) -> Solved with Ngrok
+    - [x] Verify connection from remote client
+- [x] Implement Web Dashboard
+    - [x] Create frontend (HTML/CSS/JS) for real-time monitoring
+    - [x] Update `websocket_server.py` to broadcast feeds/alerts to dashboard
+    - [x] serve dashboard static files from Flask
+    - [x] **NEW**: Implement Browser-Side Capture (Device accessing dashboard acts as Camera)
+        - [x] Add `getUserMedia` logic to `index.html`
+        - [x] Stream audio/video directly from JS to Server
+- [x] Prepare for Render Deployment
+    - [x] Create `Procfile` and `runtime.txt` (runtime.txt implied default)
+    - [x] Verify `requirements.txt` for production
+    - [ ] Create `render.yaml` (optional but good)

@@ -1,0 +1,7 @@
+venv
+.env
+__pycache__
+models/confusion_matrix.png
+models/test_report.json
+models/training_curves.png
+models/training_history.json

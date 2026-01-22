@@ -1,0 +1,14 @@
+torch
+numpy
+librosa
+opencv-python
+groq
+twilio
+Flask
+python-dotenv
+flask-socketio
+eventlet
+flask-cors
+gunicorn
+pyaudio
+websocket-client
