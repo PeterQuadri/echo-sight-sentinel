@@ -1,5 +1,6 @@
-import socketio
 import eventlet
+eventlet.monkey_patch()
+import socketio
 import numpy as np
 import base64
 import os
