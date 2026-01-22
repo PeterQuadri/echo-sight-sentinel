@@ -25,8 +25,8 @@
 - [x] Troubleshooting
     - [x] Fix Git push error
     - [x] Resolve WebSocket "flapping" disconnects (Add eventlet monkey-patch)
-- [/] Implement Private Isolated Sessions
+- [x] Implement Private Isolated Sessions
     - [x] Create session mapper in `websocket_server.py`
     - [x] Modify detector to emit only to owner `sid`
-    - [ ] Update `index.html` to show local preview in main area
+    - [x] Update `index.html` to show local preview in main area
     - [x] Add cleanup on disconnect
