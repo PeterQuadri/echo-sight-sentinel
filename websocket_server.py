@@ -30,7 +30,7 @@ user_sessions = {}
 # Load system configuration once
 load_dotenv()
 GROQ_KEY = os.getenv("GROQ_API_KEY")
-MODEL_PATH = r"D:\DOCUMENTS\RAIN\AIML\Second_semester\Project\models\best_model.pth"
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'best_model.pth')
 TWILIO_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 SANDBOX_NUM = os.getenv("TWILIO_SANDBOX_NUMBER")
