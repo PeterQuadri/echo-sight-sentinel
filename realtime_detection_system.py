@@ -85,7 +85,7 @@ class RealTimeDetector:
     Real-time emergency sound detection system
     """
     
-    def __init__(self, model_path, class_names, config, video_analyzer=None, whatsapp_notifier=None, socketio_server=None):
+    def __init__(self, model_path, class_names, config, video_analyzer=None, whatsapp_notifier=None, socketio_server=None, target_sid=None):
         """
         Initialize the detector
         
@@ -94,12 +94,14 @@ class RealTimeDetector:
             class_names: List of class names
             config: Configuration dictionary
             socketio_server: SocketIO server instance for broadcasting events
+            target_sid: If provided, emits will be targeted to this specific socket ID
         """
         self.class_names = class_names
         self.config = config
         self.video_analyzer = video_analyzer
         self.whatsapp_notifier = whatsapp_notifier
         self.sio = socketio_server
+        self.sid = target_sid
         
         # Audio parameters
         self.sr = config.get('sample_rate', 22050)
@@ -312,7 +314,7 @@ class RealTimeDetector:
                     
                     # BROADCAST ALERT TO DASHBOARD
                     if self.sio:
-                        self.sio.emit('alert_event', res)
+                        self.sio.emit('alert_event', res, to=self.sid)
 
                     # 3. Send WhatsApp Alert
                     if self.whatsapp_notifier:
@@ -328,7 +330,7 @@ class RealTimeDetector:
                     
                     # Still log to dashboard as info
                     if self.sio:
-                        self.sio.emit('status_update', res)
+                        self.sio.emit('status_update', res, to=self.sid)
             
             threading.Thread(target=verify, daemon=True).start()
         else:
@@ -389,7 +391,7 @@ class RealTimeDetector:
                         self.sio.emit('audio_stats', {
                             'class_name': class_name,
                             'confidence': float(confidence)
-                        })
+                        }, to=self.sid)
                     
                     # Apply temporal filtering
                     is_emergency, filtered_class, avg_confidence = self.temporal_filter(class_idx, confidence)

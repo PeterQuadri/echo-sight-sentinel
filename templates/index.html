@@ -208,12 +208,14 @@
             }
         });
 
-        // 2. Video Feed
+        // 2. Video Feed (From Server or Local)
         socket.on('video_feed', (b64_frame) => {
-            elNoFeed.classList.add('hidden');
-            elFeed.classList.remove('hidden');
-            elFeed.src = 'data:image/jpeg;base64,' + b64_frame;
-            elFPS.classList.toggle('text-gray-400');
+            if (!isBroadcasting) {
+                elNoFeed.classList.add('hidden');
+                elFeed.classList.remove('hidden');
+                elFeed.src = 'data:image/jpeg;base64,' + b64_frame;
+                elFPS.classList.toggle('text-gray-400');
+            }
         });
 
         // 3. Alerts
@@ -275,7 +277,12 @@
                     audio: true
                 });
 
-                elPreview.srcObject = mediaStream;
+                // Set main feed to local stream for zero-latency monitoring
+                elFeed.srcObject = mediaStream;
+                elFeed.classList.remove('hidden');
+                elNoFeed.classList.add('hidden');
+
+                elPreview.srcObject = mediaStream; // Keep overlay preview too
                 elOverlay.classList.remove('hidden');
                 isBroadcasting = true;
 

@@ -25,8 +25,8 @@
 - [x] Troubleshooting
     - [x] Fix Git push error
     - [x] Resolve WebSocket "flapping" disconnects (Add eventlet monkey-patch)
-- [/] Transition to Strict Web Flow
-    - [x] Remove `pyaudio` from `requirements.txt`
-    - [x] Remove local capture logic from `realtime_detection_system.py`
-    - [ ] Overhaul `index.html` for Sentinel/Command modes
-    - [ ] Deploy and verify Link-based flow
+- [/] Implement Private Isolated Sessions
+    - [x] Create session mapper in `websocket_server.py`
+    - [x] Modify detector to emit only to owner `sid`
+    - [ ] Update `index.html` to show local preview in main area
+    - [x] Add cleanup on disconnect
