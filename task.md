@@ -45,5 +45,7 @@
     - [x] Fix session duplicated logs
 - [x] Audio Prediction Fixes
     - [x] Fix sliding window buffer bug (preventing continuous analysis)
+    - [x] Fix TypeError (float indices in slice)
     - [x] Reduce latency (3s -> 1.5s) for more responsive feedback
     - [x] Add RMS energy sensing to server logs
+    - [/] Investigate Mic Silence issue (Diagnostic added to frontend)
