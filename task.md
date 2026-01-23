@@ -33,3 +33,9 @@
 - [x] Deployment Fixes & Optimization
     - [x] Fix hardcoded Windows paths for Render (Linux)
     - [x] Optimize memory by sharing model across sessions
+    - [x] Fix disconnect signature mismatch
+    - [x] Fix headless video release AttributeError
+- [x] UI/UX Realignment
+    - [x] Remove overlay screens
+    - [x] Implement single-page dashboard with local camera preview
+    - [x] Display all 4 audio class probabilities in real-time

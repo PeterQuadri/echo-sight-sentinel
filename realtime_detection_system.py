@@ -464,8 +464,6 @@ class RealTimeDetector:
         
         print("✅ Detection system running in background (waiting for socket input)...")
 
-        print("✅ Detection system running in background (waiting for socket input)...")
-
     def print_statistics(self):
         """Print detection statistics"""
         if self.stats['start_time'] is None:

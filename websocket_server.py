@@ -24,8 +24,11 @@ app = Flask(__name__)
 sio = socketio.Server(cors_allowed_origins='*', max_http_buffer_size=10*1024*1024) 
 app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
 
-# Global session manager: { sid: { 'detector': detector, 'analyzer': analyzer } }
+import threading
+
+# Global session manager: { sid: { 'detector': detector, 'analyzer': analyzer, 'packets': { 'audio': 0, 'video': 0 } } }
 user_sessions = {}
+session_lock = threading.Lock()
 
 # Load system configuration once
 load_dotenv()
@@ -71,28 +74,30 @@ DETECTOR_CONFIG = {
 }
 
 def get_or_create_session(sid):
-    if sid not in user_sessions:
-        print(f"🛠️ Creating isolated session for {sid}")
-        analyzer = EmergencyVideoAnalyzer(groq_api_key=GROQ_KEY, headless=True)
-        analyzer.start()
-        
-        detector = RealTimeDetector(
-            model_path=MODEL_PATH,
-            class_names=CLASS_NAMES,
-            config=DETECTOR_CONFIG,
-            video_analyzer=analyzer,
-            whatsapp_notifier=NOTIFIER,
-            socketio_server=sio,
-            target_sid=sid,
-            pretrained_model=shared_model
-        )
-        detector.start_headless()
-        
-        user_sessions[sid] = {
-            'detector': detector,
-            'analyzer': analyzer
-        }
-    return user_sessions[sid]
+    with session_lock:
+        if sid not in user_sessions:
+            print(f"🛠️ Creating isolated session for {sid}")
+            analyzer = EmergencyVideoAnalyzer(groq_api_key=GROQ_KEY, headless=True)
+            analyzer.start()
+            
+            detector = RealTimeDetector(
+                model_path=MODEL_PATH,
+                class_names=CLASS_NAMES,
+                config=DETECTOR_CONFIG,
+                video_analyzer=analyzer,
+                whatsapp_notifier=NOTIFIER,
+                socketio_server=sio,
+                target_sid=sid,
+                pretrained_model=shared_model
+            )
+            detector.start_headless()
+            
+            user_sessions[sid] = {
+                'detector': detector,
+                'analyzer': analyzer,
+                'packets': {'audio': 0, 'video': 0}
+            }
+        return user_sessions[sid]
 
 # --- Routes ---
 @app.route('/')
@@ -132,6 +137,11 @@ def audio_data(sid, data):
             audio_array = np.frombuffer(data, dtype=np.float32)
         
         sess['detector'].audio_queue.put(audio_array)
+        
+        # Diagnostic logging for first few packets
+        sess['packets']['audio'] += 1
+        if sess['packets']['audio'] <= 5:
+            print(f"DEBUG [{sid}] Received audio packet #{sess['packets']['audio']}: {len(audio_array)} samples")
     except Exception as e:
         print(f"Error processing audio data for {sid}: {e}")
 
@@ -145,6 +155,11 @@ def video_data(sid, data):
             frame_b64 = data
             
         sess['analyzer'].add_frame(frame_b64)
+        
+        # Diagnostic logging for first few packets
+        sess['packets']['video'] += 1
+        if sess['packets']['video'] <= 5:
+            print(f"DEBUG [{sid}] Received video frame #{sess['packets']['video']}: {len(frame_b64)} chars (b64)")
         
         # Emit BACK to the same SID for their own "Live Monitoring" view
         sio.emit('video_feed', frame_b64, to=sid)
