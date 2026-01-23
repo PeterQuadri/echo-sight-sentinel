@@ -109,7 +109,7 @@ class RealTimeDetector:
         self.duration = config.get('duration', 1)
         self.chunk_size = config.get('chunk_size', 1024)
         self.n_mels = config.get('n_mels', 128)
-        self.n_samples = self.sr * self.duration
+        self.n_samples = int(self.sr * self.duration)
         
         # Detection parameters
         self.confidence_threshold = config.get('confidence_threshold', 0.7)
@@ -422,7 +422,7 @@ class RealTimeDetector:
                     
                     # Proper Sliding Window: keep the last (n_samples - stride)
                     # We stride by 1 second (self.sr) to update predictions every second
-                    stride_samples = self.sr
+                    stride_samples = int(self.sr)
                     if len(audio_buffer) >= self.n_samples:
                          audio_buffer = audio_buffer[stride_samples:]
                     else:

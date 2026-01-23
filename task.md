@@ -43,3 +43,7 @@
     - [x] Implement thread-safe session creation (locking)
     - [x] Add server/client diagnostics for audio/video flow
     - [x] Fix session duplicated logs
+- [x] Audio Prediction Fixes
+    - [x] Fix sliding window buffer bug (preventing continuous analysis)
+    - [x] Reduce latency (3s -> 1.5s) for more responsive feedback
+    - [x] Add RMS energy sensing to server logs
