@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from flask import Flask, render_template
 
 # Import our system components
-from realtime_detection_system import RealTimeDetector
+from realtime_detection_system import RealTimeDetector, EmergencySoundCNN
 from emergency_video_llm import EmergencyVideoAnalyzer
 from whatsapp_notifier import WhatsAppNotifier
 import whatsapp_server
@@ -37,13 +37,25 @@ SANDBOX_NUM = os.getenv("TWILIO_SANDBOX_NUMBER")
 YOUR_PHONE = os.getenv("USER_PHONE_NUMBER")
 NOTIFIER = WhatsAppNotifier(TWILIO_SID, TWILIO_TOKEN, SANDBOX_NUM, YOUR_PHONE)
 
-# Get class names once
+# Load and initialize the shared model globally to save memory
+shared_model = None
 try:
+    print(f"📦 Pre-loading shared model from: {MODEL_PATH}")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    # Initialize architecture
+    shared_model = EmergencySoundCNN(num_classes=4) # Assuming 4 based on CLASS_NAMES
+    
+    # Load state dict
     checkpoint = torch.load(MODEL_PATH, map_location=device)
+    shared_model.load_state_dict(checkpoint['model_state_dict'])
+    shared_model.to(device)
+    shared_model.eval()
+    
     CLASS_NAMES = checkpoint.get('class_names', ['background', 'glass_breaking', 'gun_shots', 'screams'])
+    print("✅ Shared model pre-loaded successfully!")
 except Exception as e:
-    print(f"Warning loading model: {e}")
+    print(f"❌ Critical Error pre-loading model: {e}")
     CLASS_NAMES = ['background', 'glass_breaking', 'gun_shots', 'screams']
 
 DETECTOR_CONFIG = {
@@ -71,7 +83,8 @@ def get_or_create_session(sid):
             video_analyzer=analyzer,
             whatsapp_notifier=NOTIFIER,
             socketio_server=sio,
-            target_sid=sid
+            target_sid=sid,
+            pretrained_model=shared_model
         )
         detector.start_headless()
         

@@ -85,7 +85,7 @@ class RealTimeDetector:
     Real-time emergency sound detection system
     """
     
-    def __init__(self, model_path, class_names, config, video_analyzer=None, whatsapp_notifier=None, socketio_server=None, target_sid=None):
+    def __init__(self, model_path, class_names, config, video_analyzer=None, whatsapp_notifier=None, socketio_server=None, target_sid=None, pretrained_model=None):
         """
         Initialize the detector
         
@@ -95,6 +95,7 @@ class RealTimeDetector:
             config: Configuration dictionary
             socketio_server: SocketIO server instance for broadcasting events
             target_sid: If provided, emits will be targeted to this specific socket ID
+            pretrained_model: Optional pre-loaded model object to avoid disk I/O and memory duplication
         """
         self.class_names = class_names
         self.config = config
@@ -118,13 +119,18 @@ class RealTimeDetector:
         
         # Device setup
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print(f"🖥️  Using device: {self.device}")
         
-        # Load model
-        print(f"📦 Loading model from: {model_path}")
-        self.model = self.load_model(model_path)
+        # Load model or use pretrained instance
+        if pretrained_model is not None:
+            self.model = pretrained_model
+            print("🚀 Using shared pretrained model instance")
+        else:
+            print(f"📦 Loading model from: {model_path}")
+            self.model = self.load_model(model_path)
+            
         self.model.eval()
-        print("✅ Model loaded successfully!")
+        self.model.to(self.device)
+        print("✅ Model ready!")
         
         # Detection history for temporal filtering
         self.detection_history = deque(maxlen=self.temporal_window)
