@@ -45,13 +45,31 @@
 <body class="h-screen flex flex-col overflow-hidden">
 
     <!-- Header -->
-    <header class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center">
+    <header
+        class="bg-gray-900 border-b border-gray-800 p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
         <div class="flex items-center gap-3">
             <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" id="conn-status"></div>
             <h1 class="text-xl font-bold neon-text tracking-wider uppercase">
                 EchoSight <span class="text-blue-500">Sentinel</span>
             </h1>
         </div>
+
+        <!-- Hardware Selectors -->
+        <div class="flex flex-wrap gap-2 items-center bg-black/40 p-2 rounded-xl border border-white/5">
+            <div class="flex flex-col">
+                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Microphone</label>
+                <select id="mic-select"
+                    class="bg-gray-800 text-white text-[11px] px-2 py-1 rounded border border-gray-700 focus:outline-none focus:border-blue-500 w-40"></select>
+            </div>
+            <div class="flex flex-col">
+                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Camera</label>
+                <select id="cam-select"
+                    class="bg-gray-800 text-white text-[11px] px-2 py-1 rounded border border-gray-700 focus:outline-none focus:border-blue-500 w-40"></select>
+            </div>
+            <button onclick="refreshDevices()" class="text-blue-400 hover:text-blue-300 px-2 pt-3"
+                title="Refresh Device List">🔄</button>
+        </div>
+
         <div class="flex items-center gap-4">
             <button id="toggle-broadcast" onclick="toggleBroadcasting()"
                 class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full text-xs font-black transition flex items-center gap-2">
@@ -178,6 +196,8 @@
         const elBtnText = document.getElementById('broadcast-text');
         const elVideoCard = document.getElementById('video-card');
         const elTopPred = document.getElementById('top-prediction');
+        const elMicSelect = document.getElementById('mic-select');
+        const elCamSelect = document.getElementById('cam-select');
 
         let isBroadcasting = false;
         let mediaStream = null;
@@ -262,10 +282,18 @@
 
         async function startBroadcasting() {
             try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 320, height: 240, frameRate: 5 },
-                    audio: true
-                });
+                // Get constraints from selection
+                const audioId = elMicSelect.value;
+                const cameraId = elCamSelect.value;
+
+                console.log("[Sentinel] Starting with: Audio=" + audioId + " Video=" + cameraId);
+
+                const constraints = {
+                    video: cameraId ? { deviceId: { exact: cameraId }, width: 320, height: 240, frameRate: 5 } : { width: 320, height: 240, frameRate: 5 },
+                    audio: audioId ? { deviceId: { exact: audioId } } : true
+                };
+
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
 
                 elNoFeed.classList.add('hidden');
                 elFeed.classList.add('hidden');
@@ -343,6 +371,44 @@
                 ? "bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-full text-xs font-black transition flex items-center gap-2"
                 : "bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full text-xs font-black transition flex items-center gap-2";
         }
+
+        // --- DEVICE ENUMERATION ---
+        async function refreshDevices() {
+            try {
+                // Trigger permission prompt if needed
+                if (!mediaStream) {
+                    const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                    tempStream.getTracks().forEach(t => t.stop());
+                }
+
+                const devices = await navigator.mediaDevices.enumerateDevices();
+
+                // Clear existing
+                elMicSelect.innerHTML = "";
+                elCamSelect.innerHTML = "";
+
+                devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `${device.kind} (Unnamed)`;
+
+                    if (device.kind === 'audioinput') {
+                        elMicSelect.appendChild(option);
+                    } else if (device.kind === 'videoinput') {
+                        elCamSelect.appendChild(option);
+                    }
+                });
+
+                if (elMicSelect.children.length === 0) elMicSelect.innerHTML = "<option>No Mic Found</option>";
+                if (elCamSelect.children.length === 0) elCamSelect.innerHTML = "<option>No Cam Found</option>";
+
+            } catch (err) {
+                console.error("Error listing devices:", err);
+            }
+        }
+
+        // Initialize device list on load
+        window.addEventListener('load', refreshDevices);
     </script>
 </body>
 
