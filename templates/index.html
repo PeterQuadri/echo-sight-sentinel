@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EchoSight Sentinel | Command Dashboard</title>
-    <!-- Use socket.io client library - Force WebSockets to avoid payload issues -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -48,7 +47,7 @@
     <!-- Header -->
     <header class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]" id="conn-status"></div>
+            <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" id="conn-status"></div>
             <h1 class="text-xl font-bold neon-text tracking-wider uppercase">
                 EchoSight <span class="text-blue-500">Sentinel</span>
             </h1>
@@ -71,12 +70,9 @@
             <!-- Video Container -->
             <div id="video-card"
                 class="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden relative shadow-2xl h-[450px] flex items-center justify-center bg-black transition-all">
-                <!-- Local Preview (Video) -->
                 <video id="sentinel-preview" autoplay muted class="w-full h-full object-cover hidden"></video>
-                <!-- Remote Feed (Img) -->
                 <img id="live-feed" src="" class="w-full h-full object-contain hidden" alt="Live Feed">
 
-                <!-- Status Overlay when no feed -->
                 <div id="no-feed" class="text-gray-500 flex flex-col items-center">
                     <svg class="w-16 h-16 mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -87,7 +83,6 @@
                     <p class="text-xs mt-2 text-gray-700">Click Start Sentinel or connect a remote node</p>
                 </div>
 
-                <!-- Overlay Tags -->
                 <div class="absolute top-4 left-4 flex gap-2">
                     <span class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-black uppercase hidden"
                         id="rec-badge">REC</span>
@@ -104,9 +99,7 @@
                     <span id="top-prediction" class="text-xs font-bold text-blue-400">WAITING...</span>
                 </div>
 
-                <!-- Grid for all 4 classes -->
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4" id="prediction-grid">
-                    <!-- Progress Bar Component -->
                     <div class="space-y-1">
                         <div class="flex justify-between text-[11px] font-bold text-gray-400">
                             <span>BACKGROUND</span>
@@ -166,13 +159,15 @@
     </main>
 
     <script>
-        // Force WebSockets for stability and performance
+        // Use auto-reconnection and explicit transports
         const socket = io({
             transports: ['websocket'],
-            upgrade: false
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000,
+            timeout: 5000
         });
 
-        // DOM Elements
         const elStatus = document.getElementById('conn-status');
         const elFeed = document.getElementById('live-feed');
         const elPreview = document.getElementById('sentinel-preview');
@@ -190,28 +185,24 @@
         let audioContext = null;
         let scriptProcessor = null;
 
-        // Clock
         setInterval(() => {
             document.getElementById('clock').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
-        // --- Socket Events ---
         socket.on('connect', () => {
-            elStatus.classList.remove('bg-red-500');
-            elStatus.classList.add('bg-green-500');
-            console.log("Connected to server via WebSocket");
+            elStatus.classList.replace('bg-red-500', 'bg-green-500');
+            elStatus.classList.replace('shadow-[0_0_10px_#ef4444]', 'shadow-[0_0_10px_#22c55e]');
+            console.log("[Sentinel] WebSocket Connected");
         });
 
-        socket.on('disconnect', () => {
-            elStatus.classList.remove('bg-green-500');
-            elStatus.classList.add('bg-red-500');
+        socket.on('disconnect', (reason) => {
+            elStatus.classList.replace('bg-green-500', 'bg-red-500');
+            elStatus.classList.replace('shadow-[0_0_10px_#22c55e]', 'shadow-[0_0_10px_#ef4444]');
+            console.warn("[Sentinel] WebSocket Disconnected:", reason);
         });
 
-        // 1. Audio Updates (All Probs)
         socket.on('audio_stats', (data) => {
             if (!data.all_probs) return;
-
-            // Update all 4 bars
             data.all_probs.forEach((prob, idx) => {
                 const pct = Math.round(prob * 100);
                 const bar = document.getElementById(`prob-${idx}-bar`);
@@ -220,7 +211,6 @@
                 if (text) text.innerText = pct + '%';
             });
 
-            // Update header summary
             const topClass = data.class_name.toUpperCase();
             elTopPred.innerText = `${topClass} (${Math.round(data.confidence * 100)}%)`;
 
@@ -233,18 +223,15 @@
             }
         });
 
-        // 2. Video Feed (Remote)
         socket.on('video_feed', (b64_frame) => {
             if (!isBroadcasting) {
                 elPreview.classList.add('hidden');
                 elNoFeed.classList.add('hidden');
                 elFeed.classList.remove('hidden');
                 elFeed.src = 'data:image/jpeg;base64,' + b64_frame;
-                elFPS.classList.toggle('text-gray-400');
             }
         });
 
-        // 3. Alerts & Checks
         socket.on('status_update', (data) => addLogEntry(data));
         socket.on('alert_event', (data) => addLogEntry(data, true));
 
@@ -270,22 +257,7 @@
             `;
             elLog.prepend(div);
             if (elLog.children.length > 50) elLog.lastElementChild.remove();
-
             if (isEmergency) new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => { });
-        }
-
-        function requestManualCheck() {
-            socket.emit('trigger_manual_check');
-            console.log("Manual check requested");
-        }
-
-        // --- TOGGLE LOGIC ---
-        async function toggleBroadcasting() {
-            if (isBroadcasting) {
-                stopBroadcasting();
-            } else {
-                await startBroadcasting();
-            }
         }
 
         async function startBroadcasting() {
@@ -295,7 +267,6 @@
                     audio: true
                 });
 
-                // Show local preview immediately in the main container
                 elNoFeed.classList.add('hidden');
                 elFeed.classList.add('hidden');
                 elPreview.classList.remove('hidden');
@@ -304,12 +275,14 @@
                 isBroadcasting = true;
                 document.getElementById('rec-badge').classList.remove('hidden');
 
-                // Video Loop (Base64 for server analysis)
+                // Video Loop (Only emit if connected)
+                const canvas = document.createElement('canvas');
+                canvas.width = 300;
+                canvas.height = 200;
+                const ctx = canvas.getContext('2d');
+
                 videoInterval = setInterval(() => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 300;
-                    canvas.height = 200;
-                    const ctx = canvas.getContext('2d');
+                    if (!socket.connected || !isBroadcasting) return;
                     ctx.drawImage(elPreview, 0, 0, canvas.width, canvas.height);
                     const b64 = canvas.toDataURL('image/jpeg', 0.4).split(',')[1];
                     socket.emit('video_data', b64);
@@ -317,25 +290,34 @@
 
                 // Audio Context
                 audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
-                console.log("[Sentinel] AudioContext Sample Rate:", audioContext.sampleRate);
+                console.log("[Sentinel] Audio Sample Rate:", audioContext.sampleRate);
 
                 const source = audioContext.createMediaStreamSource(mediaStream);
                 scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
 
                 let aCount = 0;
                 scriptProcessor.onaudioprocess = (e) => {
-                    if (!isBroadcasting) return;
+                    if (!isBroadcasting || !socket.connected) return;
                     const inputData = e.inputBuffer.getChannelData(0);
+
+                    // Volume Diagnostic
+                    let maxVal = 0;
+                    for (let i = 0; i < inputData.length; i++) {
+                        let val = Math.abs(inputData[i]);
+                        if (val > maxVal) maxVal = val;
+                    }
+
                     socket.emit('audio_data', new Float32Array(inputData).buffer);
                     aCount++;
-                    if (aCount <= 5) console.log("[Sentinel] Sent audio packet #" + aCount);
+                    if (aCount % 40 === 0) console.log("[Sentinel] Monitoring... Max Amp:", maxVal.toFixed(4));
                 };
+
                 source.connect(scriptProcessor);
                 scriptProcessor.connect(audioContext.destination);
 
                 updateButton(true);
             } catch (err) {
-                alert("Please enable Camera/Mic access: " + err);
+                alert("Permission Denied: Mic/Camera required for Sentinel Mode.");
             }
         }
 
@@ -344,11 +326,14 @@
             if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
             if (audioContext) audioContext.close();
             if (videoInterval) clearInterval(videoInterval);
-
             elPreview.classList.add('hidden');
             elNoFeed.classList.remove('hidden');
             document.getElementById('rec-badge').classList.add('hidden');
             updateButton(false);
+        }
+
+        function toggleBroadcasting() {
+            isBroadcasting ? stopBroadcasting() : startBroadcasting();
         }
 
         function updateButton(active) {
