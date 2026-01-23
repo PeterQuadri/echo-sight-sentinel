@@ -30,6 +30,6 @@
     - [x] Modify detector to emit only to owner `sid`
     - [x] Update `index.html` to show local preview in main area
     - [x] Add cleanup on disconnect
-- [/] Deployment Fixes & Optimization
+- [x] Deployment Fixes & Optimization
     - [x] Fix hardcoded Windows paths for Render (Linux)
-    - [ ] Optimize memory by sharing model across sessions
+    - [x] Optimize memory by sharing model across sessions

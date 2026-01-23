@@ -60,7 +60,8 @@ class EmergencyVideoAnalyzer:
         self.is_running = False
         if hasattr(self, 'thread'):
             self.thread.join()
-        self.cap.release()
+        if self.cap is not None:
+            self.cap.release()
 
     def add_frame(self, frame_b64: str):
         """Manually add a frame from the browser (b64 string)"""

@@ -111,9 +111,9 @@ def connect(sid, environ):
     print(f"✅ Client connected: {sid}")
 
 @sio.event
-def disconnect(sid):
+def disconnect(sid, reason=None):
     if sid in user_sessions:
-        print(f"🧹 Cleaning up session for {sid}")
+        print(f"🧹 Cleaning up session for {sid} (Reason: {reason})")
         sess = user_sessions.pop(sid)
         sess['detector'].is_running = False
         sess['analyzer'].stop()

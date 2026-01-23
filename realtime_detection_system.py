@@ -394,9 +394,12 @@ class RealTimeDetector:
                     
                     # BROADCAST TO DASHBOARD
                     if self.sio:
+                        # Convert numpy probabilities to standard list of floats
+                        probs_list = [float(p) for p in all_probs]
                         self.sio.emit('audio_stats', {
                             'class_name': class_name,
-                            'confidence': float(confidence)
+                            'confidence': float(confidence),
+                            'all_probs': probs_list
                         }, to=self.sid)
                     
                     # Apply temporal filtering
