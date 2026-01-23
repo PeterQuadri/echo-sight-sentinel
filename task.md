@@ -39,3 +39,7 @@
     - [x] Remove overlay screens
     - [x] Implement single-page dashboard with local camera preview
     - [x] Display all 4 audio class probabilities in real-time
+- [x] Stream Stability & Session Sync
+    - [x] Implement thread-safe session creation (locking)
+    - [x] Add server/client diagnostics for audio/video flow
+    - [x] Fix session duplicated logs

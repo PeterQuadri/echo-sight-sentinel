@@ -420,13 +420,13 @@ class RealTimeDetector:
                             # DON'T sleep here! Cooldown handles alert frequency, 
                             # we must keep processing the queue or it will back up.
                     
-                    # Sliding window (if not cleared): keep the last (duration - 1s) for 1s stride
-                    if len(audio_buffer) > 0:
-                        stride_samples = self.sr # 1 second stride
-                        if len(audio_buffer) > self.n_samples:
-                            audio_buffer = audio_buffer[stride_samples:]
-                        else:
-                            audio_buffer = np.array([])
+                    # Proper Sliding Window: keep the last (n_samples - stride)
+                    # We stride by 1 second (self.sr) to update predictions every second
+                    stride_samples = self.sr
+                    if len(audio_buffer) >= self.n_samples:
+                         audio_buffer = audio_buffer[stride_samples:]
+                    else:
+                         audio_buffer = np.array([])
                 
                 # Prevent queue overflow (lag protection)
                 if self.audio_queue.qsize() > 20: 

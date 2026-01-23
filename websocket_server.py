@@ -63,7 +63,7 @@ except Exception as e:
 
 DETECTOR_CONFIG = {
     'sample_rate': 22050,
-    'duration': 3,
+    'duration': 1.5,
     'chunk_size': 1024,
     'n_mels': 128,
     'confidence_threshold': 0.80,
@@ -140,8 +140,10 @@ def audio_data(sid, data):
         
         # Diagnostic logging for first few packets
         sess['packets']['audio'] += 1
-        if sess['packets']['audio'] <= 5:
-            print(f"DEBUG [{sid}] Received audio packet #{sess['packets']['audio']}: {len(audio_array)} samples")
+        if sess['packets']['audio'] <= 20: # Log more to see noise
+            rms = np.sqrt(np.mean(audio_array**2))
+            level = " [SILENT]" if rms < 0.001 else " [HEARING]"
+            print(f"DEBUG [{sid}] Audio #{sess['packets']['audio']}: {len(audio_array)} samples, RMS: {rms:.5f}{level}")
     except Exception as e:
         print(f"Error processing audio data for {sid}: {e}")
 
