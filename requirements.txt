@@ -11,3 +11,4 @@ eventlet
 flask-cors
 gunicorn
 websocket-client
+supabase

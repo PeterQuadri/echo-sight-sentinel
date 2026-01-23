@@ -14,6 +14,7 @@ from realtime_detection_system import RealTimeDetector, EmergencySoundCNN
 from emergency_video_llm import EmergencyVideoAnalyzer
 from whatsapp_notifier import WhatsAppNotifier
 import whatsapp_server
+import supabase_utils
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
@@ -114,6 +115,10 @@ def health():
 @sio.event
 def connect(sid, environ):
     print(f"✅ Client connected: {sid}")
+    # Send recent history to new client
+    history = supabase_utils.get_recent_incidents(limit=10)
+    if history:
+        sio.emit('initial_history', history, to=sid)
 
 @sio.event
 def disconnect(sid, reason=None):

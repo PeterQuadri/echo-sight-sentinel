@@ -8,6 +8,7 @@ import time
 import threading
 from collections import deque
 import numpy as np
+import supabase_utils
 
 class EmergencyVideoAnalyzer:
     """
@@ -222,6 +223,24 @@ Respond ONLY with JSON:
                 raise e
 
             print(f"📹 Video Analysis: {result['decision']} ({result.get('confidence', 0)*100:.0f}%)")
+            
+            # SUPABASE INTEGRATION
+            evidence_url = None
+            if result['decision'] == "True Emergency":
+                # Use the last frame from analyzed frames as evidence
+                if analysis_frames:
+                    last_frame_b64 = self.encode_frame(analysis_frames[-1])
+                    evidence_url = supabase_utils.upload_evidence(last_frame_b64)
+            
+            # Log everything (Emergency and False Positive)
+            supabase_utils.log_incident(
+                audio_class=audio_class,
+                confidence=result.get('confidence', 0),
+                decision=result['decision'],
+                reasoning=result['reasoning'],
+                evidence_url=evidence_url
+            )
+            
             return result
 
         except Exception as e:

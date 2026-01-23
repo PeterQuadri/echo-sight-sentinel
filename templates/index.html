@@ -255,29 +255,70 @@
         socket.on('status_update', (data) => addLogEntry(data));
         socket.on('alert_event', (data) => addLogEntry(data, true));
 
-        function addLogEntry(data, isEmergency = false) {
+        // 4. Initial History from Supabase
+        socket.on('initial_history', (history) => {
+            elLog.innerHTML = ""; // Clear the loading message
+            history.forEach(item => {
+                const isEmergency = item.decision === "True Emergency";
+                addLogEntry({
+                    decision: item.decision,
+                    reasoning: item.reasoning,
+                    evidence_url: item.evidence_url,
+                    timestamp: item.created_at
+                }, isEmergency, true); // true for isHistory
+            });
+        });
+
+        function addLogEntry(data, isEmergency = false, isHistory = false) {
             if (elLog.firstElementChild && elLog.firstElementChild.classList.contains('text-center')) {
                 elLog.innerHTML = '';
             }
             const div = document.createElement('div');
-            const time = new Date().toLocaleTimeString();
+
+            // Format time
+            let timeStr;
+            if (data.timestamp) {
+                const d = new Date(data.timestamp);
+                timeStr = d.toLocaleTimeString();
+            } else {
+                timeStr = new Date().toLocaleTimeString();
+            }
+
             const decision = data.decision || 'Update';
             const reasoning = data.reasoning || 'No details provided';
 
             let colorClass = isEmergency ? 'border-red-500 bg-red-900/10' : 'border-blue-500 bg-blue-900/10';
             if (decision === 'False Positive') colorClass = 'border-yellow-500 bg-yellow-900/10';
 
+            let evidenceLink = "";
+            if (data.evidence_url) {
+                evidenceLink = `
+                    <a href="${data.evidence_url}" target="_blank" 
+                       class="mt-2 inline-block text-[10px] font-bold text-blue-400 hover:text-blue-300 underline uppercase tracking-tighter">
+                       📸 View Evidence Snapshot
+                    </a>
+                `;
+            }
+
             div.className = `p-4 rounded-xl border-l-4 ${colorClass} text-xs transition-all hover:scale-[1.01]`;
             div.innerHTML = `
                 <div class="flex justify-between items-center mb-1">
                     <span class="font-black uppercase tracking-tighter ${isEmergency ? 'text-red-500' : 'text-blue-400'}">${decision}</span>
-                    <span class="text-gray-600 font-mono text-[10px]">${time}</span>
+                    <span class="text-gray-600 font-mono text-[10px]">${timeStr}</span>
                 </div>
                 <p class="text-gray-400 leading-relaxed">${reasoning}</p>
+                ${evidenceLink}
             `;
-            elLog.prepend(div);
+
+            if (isHistory) {
+                elLog.appendChild(div);
+            } else {
+                elLog.prepend(div);
+            }
+
             if (elLog.children.length > 50) elLog.lastElementChild.remove();
-            if (isEmergency) new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => { });
+
+            if (isEmergency && !isHistory) new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => { });
         }
 
         async function startBroadcasting() {
