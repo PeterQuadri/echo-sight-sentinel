@@ -68,7 +68,7 @@ DETECTOR_CONFIG = {
     'n_mels': 128,
     'confidence_threshold': 0.80,
     'temporal_window': 2,
-    'energy_threshold': 0.002,
+    'energy_threshold': 0.0005,
     'cooldown_seconds': 5,
     'log_dir': 'detection_logs'
 }

@@ -222,6 +222,7 @@ class RealTimeDetector:
         # Energy threshold check on RAW audio (RMS)
         rms = np.sqrt(np.mean(audio**2))
         if rms < self.energy_threshold:
+            # print(f"DEBUG: Skipping due to low energy ({rms:.5f} < {self.energy_threshold})")
             num_classes = len(self.class_names)
             bg_probs = np.zeros(num_classes)
             bg_probs[0] = 1.0 # Background is usually the first class
