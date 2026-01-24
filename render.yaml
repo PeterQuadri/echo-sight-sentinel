@@ -3,7 +3,7 @@ services:
     name: echo-sight-sentinel
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -k eventlet -w 1 websocket_server:app
+    startCommand: gunicorn -k eventlet -w 1 --timeout 120 websocket_server:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0

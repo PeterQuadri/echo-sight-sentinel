@@ -20,6 +20,8 @@ from whatsapp_notifier import WhatsAppNotifier
 import whatsapp_server
 from dotenv import load_dotenv
 import os
+import gc
+import eventlet
 warnings.filterwarnings('ignore')
 
 # Import your model architecture
@@ -437,6 +439,11 @@ class RealTimeDetector:
                             self.audio_queue.get_nowait()
                         except queue.Empty:
                             break
+                
+                # Yield and collect garbage to save memory on Render
+                eventlet.sleep(0)
+                if self.stats['total_processed'] % 10 == 0:
+                    gc.collect()
                 
             except queue.Empty:
                 continue

@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore')
 # Initialize Flask and SocketIO
 app = Flask(__name__)
 # Enable CORS for all domains (important for Render/Ngrok)
-sio = socketio.Server(cors_allowed_origins='*', max_http_buffer_size=10*1024*1024) 
+sio = socketio.Server(cors_allowed_origins='*', max_http_buffer_size=5*1024*1024) 
 app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
 
 import threading

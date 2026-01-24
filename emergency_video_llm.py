@@ -28,8 +28,8 @@ class EmergencyVideoAnalyzer:
         self.model = model
         self.headless = headless
         
-        # Frame Buffer (Last 2 seconds assuming 10 FPS)
-        self.buffer_size = 20
+        # Frame Buffer (Last 1 second assuming 10 FPS to save memory on Render)
+        self.buffer_size = 10
         self.frame_buffer = deque(maxlen=self.buffer_size)
         
         # Video Capture
@@ -86,7 +86,7 @@ class EmergencyVideoAnalyzer:
             if ret:
                 with self.lock:
                     self.frame_buffer.append(frame)
-            time.sleep(0.1) # 10 FPS is enough for reaction capture
+            eventlet.sleep(0.1) # 10 FPS is enough for reaction capture
 
     def encode_frame(self, frame) -> str:
         """Base64 encode for API"""
